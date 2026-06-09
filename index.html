@@ -281,17 +281,42 @@
                     base64 += '=';
                 }
 
-                const decoded = atob(base64);
-                const params = decoded.split('|');
-                
-                if (params.length < 4) {
-                    throw new Error("Invalid payload length");
-                }
+                let decoded = atob(base64);
+                let matchId, playerId, upiId, fee;
 
-                const matchId = params[0];
-                const playerId = params[1];
-                const upiId = params[2];
-                const fee = params[3];
+                if (decoded.startsWith('c:')) {
+                    const parts = decoded.substring(2).split('|');
+                    if (parts.length < 4) {
+                        throw new Error("Invalid compressed payload length");
+                    }
+                    matchId = parseInt(parts[0], 36).toString();
+                    playerId = parseInt(parts[1], 36).toString();
+                    
+                    const compressedUpi = parts[2];
+                    const upiSuffixes = [
+                        "@ybl", "@okhdfcbank", "@okaxis", "@paytm", "@upi", 
+                        "@apl", "@okicici", "@oksbi", "@axl", "@ibl"
+                    ];
+                    if (compressedUpi.includes('~')) {
+                        const upiParts = compressedUpi.split('~');
+                        const index = parseInt(upiParts[1], 10);
+                        upiId = upiParts[0] + upiSuffixes[index];
+                    } else {
+                        upiId = compressedUpi;
+                    }
+                    
+                    const cents = parseInt(parts[3], 36);
+                    fee = (cents / 100).toString();
+                } else {
+                    const params = decoded.split('|');
+                    if (params.length < 4) {
+                        throw new Error("Invalid payload length");
+                    }
+                    matchId = params[0];
+                    playerId = params[1];
+                    upiId = params[2];
+                    fee = params[3];
+                }
 
                 // Update UI details
                 document.getElementById('val-match').innerText = '#' + matchId;
