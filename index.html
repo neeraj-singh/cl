@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cricket Ledger - Payment Redirect</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --primary: #00ff88;
+            --primary-glow: rgba(0, 255, 136, 0.3);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Ambient Background Glows */
+        .glow-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            z-index: 1;
+            opacity: 0.5;
+        }
+
+        .orb-1 {
+            width: 300px;
+            height: 300px;
+            background: #00ff88;
+            top: -10%;
+            left: -10%;
+            animation: float-1 20s infinite alternate;
+        }
+
+        .orb-2 {
+            width: 400px;
+            height: 400px;
+            background: #0066ff;
+            bottom: -10%;
+            right: -10%;
+            animation: float-2 25s infinite alternate;
+        }
+
+        @keyframes float-1 {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(100px, 50px) scale(1.2); }
+        }
+
+        @keyframes float-2 {
+            0% { transform: translate(0, 0) scale(1.2); }
+            100% { transform: translate(-100px, -50px) scale(0.9); }
+        }
+
+        /* Glass Container */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 40px;
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            z-index: 10;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            animation: fade-in 1s ease-out;
+        }
+
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .logo {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #00ff88, #0066ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 24px;
+            letter-spacing: -1px;
+        }
+
+        /* Custom Spinner */
+        .spinner-container {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 30px;
+        }
+
+        .spinner-ring {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 4px solid transparent;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1.2s linear infinite;
+            filter: drop-shadow(0 0 8px var(--primary-glow));
+        }
+
+        .spinner-inner {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            width: 70px;
+            height: 70px;
+            border: 4px solid transparent;
+            border-bottom-color: #0066ff;
+            border-radius: 50%;
+            animation: spin-reverse 1.5s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes spin-reverse {
+            0% { transform: rotate(360deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        h2 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .description {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 30px;
+        }
+
+        /* Txn details */
+        .details-box {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .detail-row:last-child {
+            margin-bottom: 0;
+            padding-top: 10px;
+            border-top: 1px dashed rgba(255, 255, 255, 0.1);
+        }
+
+        .label {
+            color: var(--text-muted);
+        }
+
+        .value {
+            font-weight: 600;
+        }
+
+        .value.highlight {
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        /* Button override */
+        .pay-btn {
+            background: linear-gradient(135deg, #00ff88, #00aa66);
+            color: #050505;
+            border: none;
+            border-radius: 12px;
+            padding: 14px 28px;
+            font-size: 1rem;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px var(--primary-glow);
+        }
+
+        .pay-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 255, 136, 0.5);
+        }
+
+        .pay-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Error message */
+        .error-title {
+            color: #ff4a4a;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+
+    <div class="card" id="card">
+        <div class="logo">CricketLedger</div>
+        
+        <div class="spinner-container" id="spinner">
+            <div class="spinner-ring"></div>
+            <div class="spinner-inner"></div>
+        </div>
+
+        <h2 id="title">Initializing UPI Payment</h2>
+        <p class="description" id="subtitle">Please wait while we establish a secure path to your UPI payment application.</p>
+
+        <div class="details-box" id="details-box" style="display: none;">
+            <div class="detail-row">
+                <span class="label">Match ID</span>
+                <span class="value" id="val-match">-</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Captain UPI</span>
+                <span class="value" id="val-upi">-</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Split Fee</span>
+                <span class="value highlight" id="val-fee">₹ 0.00</span>
+            </div>
+        </div>
+
+        <button class="pay-btn" id="pay-btn" style="display: none;">Open UPI App Manually</button>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const dParam = urlParams.get('d');
+
+        function showError(message) {
+            document.getElementById('spinner').style.display = 'none';
+            document.getElementById('title').innerText = 'Invalid Payment Link';
+            document.getElementById('title').className = 'error-title';
+            document.getElementById('subtitle').innerText = message;
+            document.getElementById('details-box').style.display = 'none';
+            document.getElementById('pay-btn').style.display = 'none';
+        }
+
+        if (dParam) {
+            try {
+                // Decode URL-safe Base64: replace '-' with '+' and '_' with '/'
+                let base64 = dParam.replace(/-/g, '+').replace(/_/g, '/');
+                // Re-add padding if necessary
+                const remainder = base64.length % 4;
+                if (remainder === 2) {
+                    base64 += '==';
+                } else if (remainder === 3) {
+                    base64 += '=';
+                }
+
+                const decoded = atob(base64);
+                const params = decoded.split('|');
+                
+                if (params.length < 4) {
+                    throw new Error("Invalid payload length");
+                }
+
+                const matchId = params[0];
+                const playerId = params[1];
+                const upiId = params[2];
+                const fee = params[3];
+
+                // Update UI details
+                document.getElementById('val-match').innerText = '#' + matchId;
+                document.getElementById('val-upi').innerText = upiId;
+                document.getElementById('val-fee').innerText = '₹ ' + parseFloat(fee).toFixed(2);
+                document.getElementById('details-box').style.display = 'block';
+
+                const upiUrl = "upi://pay?pa=" + upiId + "&pn=Captain&am=" + fee + "&tn=Match-" + matchId;
+
+                // Configure manual button click
+                const payBtn = document.getElementById('pay-btn');
+                payBtn.style.display = 'block';
+                payBtn.onclick = () => {
+                    window.location.href = upiUrl;
+                };
+
+                // Action A: FCM REST API Call
+                // Send an async POST to notify the captain's device.
+                // We target the topic 'match-{matchId}' to let the captain's device listen.
+                const fcmUrl = 'https://fcm.googleapis.com/fcm/send';
+                const fcmPayload = {
+                    to: `/topics/match-${matchId}`,
+                    data: {
+                        matchId: matchId,
+                        playerId: playerId,
+                        status: 'PENDING_CLICKED',
+                        timestamp: Date.now().toString()
+                    },
+                    notification: {
+                        title: "Payment Link Opened",
+                        body: `Player has clicked the payment link for Match #${matchId}.`
+                    }
+                };
+
+                // Perform the async post, then redirect
+                fetch(fcmUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'key=AAAALedgerFCMKeyMockPlaceholderKey' // Clean mockup credential key
+                    },
+                    body: JSON.stringify(fcmPayload)
+                })
+                .then(response => {
+                    console.log('FCM Update dispatched successfully');
+                })
+                .catch(error => {
+                    console.error('FCM Update failed:', error);
+                })
+                .finally(() => {
+                    // Action B: Shift location to fire native UPI
+                    document.getElementById('title').innerText = 'Redirecting...';
+                    document.getElementById('subtitle').innerText = 'Attempting to launch your preferred UPI application.';
+                    
+                    setTimeout(() => {
+                        window.location.href = upiUrl;
+                    }, 800);
+                });
+
+            } catch (e) {
+                console.error("Payload decoding error:", e);
+                showError("The payment link you followed appears to be malformed or expired. Please contact your team captain.");
+            }
+        } else {
+            showError("No transaction data was found in the URL. Please verify the link you clicked.");
+        }
+    </script>
+</body>
+</html>
